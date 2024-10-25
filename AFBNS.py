@@ -7,13 +7,14 @@ import time
 from curl_cffi import requests as crequests
 import requests
 from datetime import datetime, timezone, timedelta
+import itertools
 
 refreshtime = 40
 fail_sleep = 20
 maxfailcount = 2
 
 chat_id = "a94osfnfyb8fb3hswqrs9ft2z9tq99"
-chat_token = "uvmzvi8phoysi7r4pt8bmzzjxbpf6y"
+chat_token = "ge1jgi5k7mg1hpqf8mssw2x1xpgp77"
 
 cookies = {
     'optimizelyEndUserId': 'oeu1724175484800r0.2073426791383468',
@@ -81,20 +82,30 @@ while(True):
         if(not firstrun):
             reduced_dict = filter_ids(df, existing_row_info)
             if(reduced_dict):
-                message = "<b> NEW ITEMS ADDED </b>\n\n"
-                for ind, info in reduced_dict.items():
-                    itemstring = f"Description: {info['Description']}\nQuantity Available: {info['Qty Avail']}\nPackage Info: {info['Pkg. Info']}\nCost: {info['$']}\n\n"
-                    message += itemstring
-                message += "https://eharvest.acfb.org/InventoryView.aspx"
-                conn = http.client.HTTPSConnection("api.pushover.net:443")
-                conn.request("POST", "/1/messages.json",
-                urllib.parse.urlencode({
-                    "token": chat_id,
-                    "user": chat_token,
-                    "message": message,
-                    "html": 1
-                }), { "Content-type": "application/x-www-form-urlencoded" })
-                conn.getresponse()
+
+                message_template = "<b> NEW ITEMS ADDED </b>\n\n"
+
+                # Split the reduced_dict into chunks of 6 items each
+                chunked_items = [dict(itertools.islice(reduced_dict.items(), i, i + 6)) for i in range(0, len(reduced_dict), 6)]
+
+                for chunk in chunked_items:
+                    message = message_template
+                    for ind, info in chunk.items():
+                        itemstring = f"Description: {info['Description']}\nQuantity Available: {info['Qty Avail']}\nPackage Info: {info['Pkg. Info']}\nCost: {info['$']}\n\n"
+                        message += itemstring
+                    
+                    message += "https://eharvest.acfb.org/InventoryView.aspx"
+                    
+                    # Send the message
+                    conn = http.client.HTTPSConnection("api.pushover.net:443")
+                    conn.request("POST", "/1/messages.json",
+                                urllib.parse.urlencode({
+                                    "token": chat_id,
+                                    "user": chat_token,
+                                    "message": message,
+                                    "html": 1
+                                }), { "Content-type": "application/x-www-form-urlencoded" })
+                    conn.getresponse()
     
         existing_row_info= (df['Item #'] + '***' + df['Description']).to_list()
         
@@ -167,9 +178,11 @@ while(True):
             '__ASYNCPOST': 'true',
             'RadAJAXControlID': 'RadAjaxManager1',
         }
-
-        response = requests.post('https://eharvest.acfb.org/Login.aspx', cookies=cookies, headers=headers, data=data)
-        print(f"Login Response: {response.text}")
+        try:
+            response = requests.post('https://eharvest.acfb.org/Login.aspx', cookies=cookies, headers=headers, data=data)
+            print(f"Login Response: {response.text}")
+        except Exception as e:
+            print(f"Error logging in: {e}")
 
     if(not failure):
         time.sleep(refreshtime)
