@@ -15,6 +15,7 @@ refreshtime = 40
 fail_sleep = 20
 maxfailcount = 2
 debug = True
+category_blacklist = ["Beverages"]
 
 chat_id = "a94osfnfyb8fb3hswqrs9ft2z9tq99"
 chat_token = "ge1jgi5k7mg1hpqf8mssw2x1xpgp77"
@@ -82,6 +83,7 @@ while(True):
         # Create a dataframe
         columns = ['Product Category', 'Item #', 'Description', 'Pkg. Info', 'Storage', 'Qty Avail', 'Qty Limit', 'Qty Min', '$', 'Cs/Pallet']
         df = pd.DataFrame(table_data, columns=columns)
+        df = df[~df['Product Category'].isin(category_blacklist)]
         if(debug):
             display(df)
         if(not firstrun):
