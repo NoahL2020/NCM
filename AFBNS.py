@@ -3,6 +3,8 @@ import pandas as pd
 from collections import deque
 import http.client, urllib
 from IPython.display import display
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
 import time 
 from curl_cffi import requests as crequests
 import requests
@@ -12,6 +14,7 @@ import itertools
 refreshtime = 40
 fail_sleep = 20
 maxfailcount = 2
+debug = True
 
 chat_id = "a94osfnfyb8fb3hswqrs9ft2z9tq99"
 chat_token = "ge1jgi5k7mg1hpqf8mssw2x1xpgp77"
@@ -79,6 +82,8 @@ while(True):
         # Create a dataframe
         columns = ['Product Category', 'Item #', 'Description', 'Pkg. Info', 'Storage', 'Qty Avail', 'Qty Limit', 'Qty Min', '$', 'Cs/Pallet']
         df = pd.DataFrame(table_data, columns=columns)
+        if(debug):
+            display(df)
         if(not firstrun):
             reduced_dict = filter_ids(df, existing_row_info)
             if(reduced_dict):
